@@ -9,6 +9,10 @@ jobs:
   build-test:
     runs-on: ubuntu-latest
 
+    strategy:
+      matrix: 
+        dotnet-version: [ "8.0.x", "7.0.x" ]
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -16,13 +20,22 @@ jobs:
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: 8.0.x
+        dotnet-version: ${{matrix.dotnet-version}}
 
     - name: Restore
       run: dotnet restore src/AutomationSolution.sln
 
     - name: Build
-      run: dotnet build src/AutomationSolution.sln --no-restore --configuration Release
+      run: dotnet build src/AutomationSolution.sln --no-restore -c Release
+
+    - name: Publish API 
+      run: dotnet publish src/Automation.Api -c Release -o out
+
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: api-${{matrix.dotnet-version}}
+        path: out
 
     - name: Test
-      run: dotnet test src/AutomationSolution.sln --no-build --configuration Release
+      run: dotnet test src/AutomationSolution.sln/ --no-build -c Release
