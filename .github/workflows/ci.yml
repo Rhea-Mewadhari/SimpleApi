@@ -38,4 +38,4 @@ jobs:
         path: out
 
     - name: Test
-      run: dotnet test src/AutomationSolution.sln/ --no-build -c Release
+      run: dotnet test src/AutomationSolution.sln --no-build -c Release
