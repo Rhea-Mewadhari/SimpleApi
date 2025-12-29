@@ -5,6 +5,8 @@ using Automation.Domain.Interfaces;
 using Automation.Infrastructure.Services;
 using Hangfire;
 using Hangfire.SqlServer;
+using System.Threading.Tasks.Dataflow;
+using System.ComponentModel.Design;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,6 +20,7 @@ builder.Services.AddTransient<ITaskExecutor, BasicTaskExecutor>();
 builder.Services.Configure<AutomationOptions>(builder.Configuration.GetSection("Automation"));
 builder.Services.AddTransient<IEmailJob, EmailJob>();
 builder.Services.AddHostedService<TaskWorker>();
+builder.Services.AddTransient<ICleanupJob,CleanupJob>();
 
 builder.Services.AddHangfire(ConfigureAwaitOptions =>
     ConfigureAwaitOptions.UseSqlServerStorage(
@@ -31,6 +34,11 @@ builder.Services.AddOpenApi();
 var app = builder.Build();
 
 app.UseHangfireDashboard();
+
+RecurringJob.AddOrUpdate<ICleanupJob>(
+    "cleanup-job",
+    job => job.Run(),
+    Cron.Minutely);
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
